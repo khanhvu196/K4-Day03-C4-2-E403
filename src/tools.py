@@ -1,49 +1,34 @@
-"""
-🛠️ TOOL REGISTRY & SCHEMAS (Dành cho Role 2: Tool & Spec Engineer)
-Nơi khai báo tất cả các "món đồ nghề" mà ReAct Agent có thể gọi.
-"""
+import json
 
-def get_weather(location: str) -> str:
-    """
-    Tra cứu thời tiết hiện tại của một thành phố.
-    
-    Args:
-        location (str): Tên thành phố (Ví dụ: 'Hà Nội', 'TP.HCM', 'Đà Nẵng')
-        
-    Returns:
-        str: Thông tin thời tiết chi tiết
-    """
-    loc_lower = location.lower()
-    if "hà nội" in loc_lower or "ha noi" in loc_lower:
-        return "Thời tiết Hà Nội: 28°C, Nắng nhẹ, Độ ẩm 65%."
-    elif "hồ chí minh" in loc_lower or "tp.hcm" in loc_lower or "hcm" in loc_lower:
-        return "Thời tiết TP.HCM: 33°C, Nắng nóng, Có mây."
-    elif "đà nẵng" in loc_lower or "da nang" in loc_lower:
-        return "Thời tiết Đà Nẵng: 30°C, Gió nhẹ, Mát mẻ."
-    else:
-        return f"LỖI: Không tìm thấy dữ liệu thời tiết cho địa điểm '{location}'."
+# Dữ liệu giả lập (Mock Database)
+MOCK_ORDERS = {
+    "DH1001": {"status": "Đã giao thành công", "date": "2026-07-25", "items": "Áo sơ mi nam", "price": 350000},
+    "DH1002": {"status": "Đang vận chuyển", "date": "2026-07-27", "items": "Quần Jeans", "price": 500000}
+}
 
+def get_order_status(order_id: str) -> str:
+    """Tra cứu thông tin và trạng thái chi tiết của một đơn hàng theo mã order_id."""
+    order = MOCK_ORDERS.get(order_id.upper())
+    if order:
+        return json.dumps(order, ensure_ascii=False)
+    return f"LỖI: Không tìm thấy đơn hàng mã '{order_id}' trong hệ thống."
 
-def search_flights(origin: str, destination: str) -> str:
-    """
-    Tra cứu chuyến bay giữa hai địa điểm.
-    
-    Args:
-        origin (str): Nơi đi (Ví dụ: 'TP.HCM')
-        destination (str): Nơi đến (Ví dụ: 'Hà Nội')
-        
-    Returns:
-        str: Danh sách chuyến bay khả dụng và giá vé
-    """
-    return (
-        f"Chuyến bay từ {origin} -> {destination} ngày mai:\n"
-        f"1. VN123 (08:00) - Giá: 1,500,000 VNĐ (Còn vé)\n"
-        f"2. VJ456 (14:30) - Giá: 1,200,000 VNĐ (Còn vé)"
-    )
+def check_return_policy(order_id: str, reason: str) -> str:
+    """Kiểm tra xem đơn hàng có đủ điều kiện đổi trả hay không dựa trên mã đơn và lý do."""
+    order = MOCK_ORDERS.get(order_id.upper())
+    if not order:
+        return f"LỖI: Mã đơn '{order_id}' không tồn tại."
+    if order["status"] != "Đã giao thành công":
+        return f"LỖI: Đơn hàng '{order_id}' chưa giao thành công, không thể tạo yêu cầu đổi trả."
+    return f"THÀNH CÔNG: Đơn hàng '{order_id}' đủ điều kiện đổi trả với lý do '{reason}'."
 
+def create_return_request(order_id: str, reason: str) -> str:
+    """Tạo phiếu yêu cầu đổi trả chính thức cho đơn hàng."""
+    return f"XÁC NHẬN: Đã tạo thành công phiếu đổi trả cho đơn '{order_id}'. Mã phiếu: RT-{order_id}-2026."
 
-# Danh sách các tool được đăng ký để Agent sử dụng
+# Đăng ký các công cụ vào Registry
 AVAILABLE_TOOLS = {
-    "get_weather": get_weather,
-    "search_flights": search_flights,
+    "get_order_status": get_order_status,
+    "check_return_policy": check_return_policy,
+    "create_return_request": create_return_request
 }
