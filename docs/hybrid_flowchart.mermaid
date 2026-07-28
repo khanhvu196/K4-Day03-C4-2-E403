@@ -1,0 +1,15 @@
+```mermaid
+flowchart TD
+    A[Nhận câu hỏi từ User] --> B{Cần dữ liệu thời gian thực hay Tool?}
+    
+    B -->|Không - Hỏi lý thuyết/Chính sách chung| C[Chatbot Baseline Path - Cấp 2]
+    C --> D[Trả lời trực tiếp bằng LLM]
+    
+    B -->|Có - Tra cứu đơn hàng / Đổi trả| E[ReAct Agent Path - Cấp 3]
+    E --> F[Thought: Suy luận bước tiếp theo]
+    F --> G[Action: Gọi Tool phù hợp]
+    G --> H[Observation: Nhận kết quả từ Tool]
+    H --> I{Đã đủ thông tin chưa?}
+    I -->|Chưa đủ & Step < MAX_ITERATIONS| F
+    I -->|Đạt ngưỡng MAX_ITERATIONS| J[Phanh Guardrail: Thông báo quá tải]
+    I -->|Đã đủ bằng chứng| K[Final Answer: Trả lời kết quả]
