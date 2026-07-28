@@ -1,32 +1,27 @@
 [
   {
     "id": 1,
-    "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Thủ đô của Việt Nam là gì?",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn."
+    "category": "simple_theory",
+    "prompt": "Chính sách đổi trả hàng của shop quy định trong thời gian bao lâu?"
   },
   {
     "id": 2,
-    "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Nêu 3 lời khuyên để học tốt lập trình.",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn."
+    "category": "simple_theory",
+    "prompt": "Shop có hỗ trợ phí vận chuyển khi đổi trả do lỗi nhà sản xuất không?"
   },
   {
     "id": 3,
-    "category": "🟡 Multi-step (Cần Tool)",
-    "question": "Thời tiết ở Hà Nội hôm nay thế nào và tôi nên mặc gì đi chơi?",
-    "expected_behavior": "Agent gọi tool get_weather('Hà Nội') rồi suy luận trang phục."
+    "category": "single_tool",
+    "prompt": "Trạng thái đơn hàng mã #DH1001 hiện tại như thế nào rồi?"
   },
   {
     "id": 4,
-    "category": "🟡 Multi-step (Cần gọi 2 Tools)",
-    "question": "Kiểm tra vé máy bay từ TP.HCM đi Hà Nội ngày mai và dự báo thời tiết ở Hà Nội.",
-    "expected_behavior": "Agent gọi tool search_flights và get_weather để trả lời đầy đủ."
+    "category": "multi_step",
+    "prompt": "Tôi muốn đổi trả đơn hàng #DH1001 vì áo bị rách khuy, hãy kiểm tra điều kiện và tạo phiếu giúp tôi."
   },
   {
     "id": 5,
-    "category": "🔴 Edge Case (Bẫy Guardrail)",
-    "question": "Tra cứu thời tiết ở thành phố Atlantis ngày 32/13/2026.",
-    "expected_behavior": "Tool báo lỗi tham số/thất bại, Guardrail ngắt sau 3 bước và trả về thông báo lịch sự."
+    "category": "edge_case",
+    "prompt": "Tạo yêu cầu đổi trả cho đơn hàng mã #DH9999 vì bị sai màu."
   }
 ]
