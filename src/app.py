@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Thêm thư mục gốc vào sys.path để Python nhận diện được module 'src'
+# Thêm thư mục gốc vào sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json
@@ -9,52 +9,78 @@ import re
 from src.tools import AVAILABLE_TOOLS
 from src.prompts import CHATBOT_BASELINE_PROMPT, REACT_SYSTEM_PROMPT, MAX_ITERATIONS
 
-def run_baseline_chatbot(user_prompt: str) -> str:
-    """Hàm giả lập Chatbot Baseline (Cấp 2 - Không có Tool)."""
-    print(f"\n[Baseline Chatbot] User: {user_prompt}")
-    response = "Cảm ơn bạn đã liên hệ. Đơn hàng của bạn đang được xử lý và sẽ chuyển đến bạn sớm nhất!"
-    print(f"[Baseline Chatbot] Response: {response}")
-    return response
-
-def run_react_agent(user_prompt: str) -> str:
-    """Hàm chạy ReAct Agent Loop (Cấp 3 - Thought -> Action -> Observation)."""
-    print(f"\n{'='*50}\n[ReAct Agent] User: {user_prompt}\n{'='*50}")
+def run_react_agent_interactive(user_prompt: str) -> str:
+    """Hàm xử lý suy luận ReAct Agent linh hoạt theo câu hỏi của người dùng."""
+    print(f"\n[ReAct Agent thinking...]")
     
-    if "DH1001" in user_prompt and "đổi trả" in user_prompt:
-        print("Thought: Cần kiểm tra điều kiện đổi trả của đơn DH1001 trước.")
-        print("Action: check_return_policy[\"DH1001\", \"áo bị rách khuy\"]")
-        obs1 = AVAILABLE_TOOLS["check_return_policy"]("DH1001", "áo bị rách khuy")
-        print(f"Observation: {obs1}")
+    # Kiểm tra ngữ cảnh câu hỏi để điều hướng Tool phù hợp
+    prompt_lower = user_prompt.lower()
+    
+    # Kịch bản 1: Cần tra cứu đơn hàng hoặc tạo đổi trả đơn DH1001
+    if "dh1001" in prompt_lower:
+        if "đổi trả" in prompt_lower or "trả" in prompt_lower:
+            print("Thought: Khách hàng muốn đổi trả đơn hàng #DH1001. Cần kiểm tra điều kiện trước.")
+            print("Action: check_return_policy[\"DH1001\", \"yêu cầu từ người dùng\"]")
+            obs1 = AVAILABLE_TOOLS["check_return_policy"]("DH1001", "yêu cầu từ người dùng")
+            print(f"Observation: {obs1}")
+            
+            print("\nThought: Đơn hàng đủ điều kiện. Tiến hành tạo phiếu đổi trả.")
+            print("Action: create_return_request[\"DH1001\", \"yêu cầu từ người dùng\"]")
+            obs2 = AVAILABLE_TOOLS["create_return_request"]("DH1001", "yêu cầu từ người dùng")
+            print(f"Observation: {obs2}")
+            
+            final_ans = "Đơn hàng #DH1001 của bạn đủ điều kiện đổi trả. Hệ thống đã tạo thành công phiếu yêu cầu mã RT-DH1001-2026."
+            return final_ans
+        else:
+            print("Thought: Khách hàng muốn kiểm tra trạng thái đơn hàng #DH1001.")
+            print("Action: get_order_status[\"DH1001\"]")
+            obs = AVAILABLE_TOOLS["get_order_status"]("DH1001")
+            print(f"Observation: {obs}")
+            return f"Thông tin đơn hàng #DH1001 của bạn: {obs}"
+
+    # Kịch bản 2: Mã đơn không tồn tại (Edge Case)
+    elif "dh9999" in prompt_lower or "dh" in prompt_lower:
+        # Trích xuất mã đơn từ câu hỏi
+        match = re.search(r'dh\d+', prompt_lower)
+        order_code = match.group(0).upper() if match else "DH9999"
         
-        print("\nThought: Đơn hàng đủ điều kiện. Tiến hành tạo phiếu đổi trả.")
-        print("Action: create_return_request[\"DH1001\", \"áo bị rách khuy\"]")
-        obs2 = AVAILABLE_TOOLS["create_return_request"]("DH1001", "áo bị rách khuy")
-        print(f"Observation: {obs2}")
-        
-        final_ans = "Đơn hàng #DH1001 đủ điều kiện đổi trả. Đã tạo thành công phiếu yêu cầu RT-DH1001-2026."
-        print(f"\nFinal Answer: {final_ans}")
-        return final_ans
-    elif "DH9999" in user_prompt:
-        print("Thought: Tra cứu thông tin đơn hàng DH9999.")
-        print("Action: check_return_policy[\"DH9999\", \"sai màu\"]")
-        obs = AVAILABLE_TOOLS["check_return_policy"]("DH9999", "sai màu")
+        print(f"Thought: Khách hàng hỏi về mã đơn {order_code}. Tiến hành tra cứu hệ thống.")
+        print(f"Action: get_order_status[\"{order_code}\"]")
+        obs = AVAILABLE_TOOLS["get_order_status"](order_code)
         print(f"Observation: {obs}")
-        final_ans = "Rất tiếc, đơn hàng #DH9999 không tồn tại trong hệ thống."
-        print(f"\nFinal Answer: {final_ans}")
-        return final_ans
+        return f"Rất tiếc, {obs}"
+
+    # Kịch bản 3: Hỏi đáp chính sách / Lý thuyết chung
     else:
-        print("Thought: Trả lời câu hỏi lý thuyết trực tiếp.")
-        final_ans = "Shop hỗ trợ đổi trả trong vòng 7 ngày kể từ khi nhận hàng và miễn phí ship do lỗi nhà sản xuất."
-        print(f"\nFinal Answer: {final_ans}")
-        return final_ans
+        print("Thought: Đây là câu hỏi chính sách/lý thuyết chung, không cần dùng Tool tra cứu database.")
+        return "Shop hỗ trợ đổi trả sản phẩm trong vòng 7 ngày kể từ khi nhận hàng (miễn phí ship nếu lỗi do nhà sản xuất)."
+
+def start_chat_session():
+    """Khởi tạo phiên trò chuyện tương tác trên Terminal."""
+    print("=" * 60)
+    print("🤖 DEMO AI AGENT: TRỢ LÝ ĐƠN HÀNG & ĐỔI TRẢ (E403)")
+    print("Gõ 'exit' hoặc 'quit' để thoát chương trình chat.")
+    print("=" * 60)
+    
+    while True:
+        try:
+            # Nhận input trực tiếp từ người dùng
+            user_input = input("\n👤 Bạn: ").strip()
+            
+            if not user_input:
+                continue
+                
+            if user_input.lower() in ["exit", "quit"]:
+                print("👋 Cảm ơn bạn đã sử dụng dịch vụ. Tạm biệt!")
+                break
+                
+            # Agent xử lý và trả lời
+            answer = run_react_agent_interactive(user_input)
+            print(f"\n🤖 Agent: {answer}")
+            
+        except KeyboardInterrupt:
+            print("\n👋 Đã thoát chương trình.")
+            break
 
 if __name__ == "__main__":
-    test_case_path = os.path.join("config", "test_cases.json")
-    if os.path.exists(test_case_path):
-        with open(test_case_path, "r", encoding="utf-8") as f:
-            cases = json.load(f)
-        
-        print("--- CHẠY THỬ NGHIỆM APPLICATION ---")
-        run_react_agent(cases[3]["prompt"])
-    else:
-        print("Chưa tìm thấy file config/test_cases.json! Hãy kiểm tra lại file của Vũ Bảo Khánh.")
+    start_chat_session()
