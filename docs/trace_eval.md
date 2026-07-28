@@ -1,32 +1,20 @@
-# 📊 BÁO CÁO GIÁM SÁT & ĐÁNH GIÁ (OBSERVABILITY TRACE LOGS)
-*Dành cho Role 5: Observability & Reviewer*
+# 📊 BÁO CÁO ĐÁNH GIÁ & TRACE LOGS - LAB 3
+**Chủ đề chọn:** Đề tài 5 - Trợ Lý Tra Cứu Đơn Hàng & Xử Lý Đổi Trả
 
 ---
 
-## 🎯 1. BẢNG CHẤM ĐIỂM AGENTIC FIT (SCORING MATRIX)
+## 1. AGENTIC FIT EVALUATION (SCORING MATRIX)
 
-| Tiêu chí | Điểm (1-5) | Lý do đánh giá |
+| Tiêu chí đánh giá | Điểm (1-5) | Lý giải chi tiết cho Đề tài 5 |
 | :--- | :---: | :--- |
-| 🧠 **Multi-step Reasoning** | `4/5` | Cần suy luận từ tra cứu thời tiết đến chọn trang phục. |
-| 🛠️ **Tool Interaction** | `5/5` | Cần tra cứu dữ liệu thời gian thực qua API thời tiết/chuyến bay. |
-| 🔀 **Dynamic Decision** | `4/5` | Kết quả bước trước quyết định hành động bước sau. |
-| ⏳ **Long Horizon** | `3/5` | Quy trình gồm 2-3 bước xử lý ngắn. |
-| **TỔNG ĐIỂM FIT** | **16/20** | **KẾT LUẬN: BÀI TOÁN RẤT NÊN DÙNG REACT AGENT!** |
+| **1. Tính thời gian thực & dữ liệu động** | 5/5 | Trạng thái đơn hàng (#DH1001) và kho bãi thay đổi liên tục, không thể dùng kiến thức tĩnh của LLM. |
+| **2. Độ phức tạp đa bước (Multi-step Reasoning)** | 5/5 | Cần kiểm tra đơn hàng -> tra cứu điều kiện chính sách -> khởi tạo phiếu đổi trả chính thức. |
+| **3. Tác động hành động (Side Effects)** | 4/5 | Việc khởi tạo yêu cầu đổi trả làm thay đổi trạng thái trong database hệ thống. |
+| **4. Biên rủi ro & Xử lý lỗi (Edge Cases)** | 4/5 | Cần xử lý các trường hợp nhập sai mã đơn, đơn chưa giao hoặc quá hạn 7 ngày đổi trả. |
+
+> **Tổng điểm Agentic Fit:** **18/20** ➔ **Rất thích hợp để xây dựng ReAct Agent.**
 
 ---
 
-## 🔍 2. SO SÁNH PHẢN HỒI (TEST CASE #3)
-
-**Câu hỏi**: *"Thời tiết ở Hà Nội hôm nay thế nào và tôi nên mặc gì đi chơi?"*
-
-### 🤖 Chatbot Baseline:
-* **Phản hồi**: *"Tôi không có truy cập Internet thời gian thực nên không biết thời tiết hôm nay ở Hà Nội."*
-* **Nhận xét**: An toàn nhưng không giải quyết được nhu cầu thực tế của người dùng.
-
-### 🧠 ReAct Agent:
-* **Thought 1**: Cần tra cứu thời tiết Hà Nội.
-* **Action 1**: `get_weather['Hà Nội']`
-* **Observation 1**: `Thời tiết Hà Nội: 28°C, Nắng nhẹ, Độ ẩm 65%.`
-* **Thought 2**: Đã có thông tin 28°C nắng nhẹ, đưa ra lời khuyên trang phục.
-* **Final Answer**: *"Thời tiết Hà Nội hôm nay 28°C, nắng nhẹ. Bạn nên mặc quần áo thoáng mát!"*
-* **Nhận xét**: Hoàn thành xuất sắc nhiệm vụ nhờ sự kết hợp giữa suy luận và công cụ.
+## 2. NHẬT KÝ KIỂM THỬ (TRACE LOGS)
+*(Sẽ cập nhật ở Mốc 2 và Mốc 3)*
