@@ -1,6 +1,11 @@
+import sys
+import os
+
+# Thêm thư mục gốc vào sys.path để Python nhận diện được module 'src'
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import json
 import re
-import os
 from src.tools import AVAILABLE_TOOLS
 from src.prompts import CHATBOT_BASELINE_PROMPT, REACT_SYSTEM_PROMPT, MAX_ITERATIONS
 
@@ -44,7 +49,6 @@ def run_react_agent(user_prompt: str) -> str:
         return final_ans
 
 if __name__ == "__main__":
-    # Đọc trực tiếp từ file config/test_cases.json
     test_case_path = os.path.join("config", "test_cases.json")
     if os.path.exists(test_case_path):
         with open(test_case_path, "r", encoding="utf-8") as f:
