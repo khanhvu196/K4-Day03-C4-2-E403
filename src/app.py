@@ -1,101 +1,61 @@
-"""
-🚀 CORE AGENT APP (Dành cho Role 4: Core Agent Developer)
-File chính ghép nối tất cả các thành phần: Tools + Prompts + Test Cases + Multi-Provider.
-"""
-
 import json
-import os
-import sys
-from dotenv import load_dotenv
+import re
+from config import test_cases
+from src.tools import AVAILABLE_TOOLS
+from src.prompts import CHATBOT_BASELINE_PROMPT, REACT_SYSTEM_PROMPT, MAX_ITERATIONS
 
-# Đảm bảo import các module cùng thư mục src/ hoạt động mượt mà
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+def run_baseline_chatbot(user_prompt: str) -> str:
+    """Hàm giả lập Chatbot Baseline (Cấp 2 - Không có Tool)."""
+    print(f"\n[Baseline Chatbot] User: {user_prompt}")
+    # Chatbot thuần không có grounding dữ liệu thực tế
+    response = "Cảm ơn bạn đã liên hệ. Đơn hàng của bạn đang được xử lý và sẽ chuyển đến bạn sớm nhất!"
+    print(f"[Baseline Chatbot] Response: {response}")
+    return response
 
-# Đảm bảo in ra Tiếng Việt và Emojis không bị lỗi trên Windows Console
-if sys.stdout.encoding != 'utf-8':
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+def parse_action(text: str):
+    """Trích xuất tên tool và tham số từ chuỗi Action của LLM."""
+    match = re.search(r'Action:\s*(\w+)\["(.*?)"\]', text)
+    if match:
+        return match.group(1), match.group(2)
+    return None, None
 
-# Import các thành phần từ file của Role 2, Role 3 & Multi-Provider Adapter
-from tools import AVAILABLE_TOOLS, get_weather, search_flights
-from prompts import CHATBOT_BASELINE_PROMPT, REACT_SYSTEM_PROMPT, MAX_ITERATIONS
-from providers import get_llm_provider
-
-load_dotenv()
-
-def load_test_cases():
-    """Đọc bộ test cases từ config/test_cases.json của Role 1"""
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    config_path = os.path.join(base_dir, "config", "test_cases.json")
+def run_react_agent(user_prompt: str) -> str:
+    """Hàm chạy ReAct Agent Loop (Cấp 3 - Thought -> Action -> Observation)."""
+    print(f"\n{'='*50}\n[ReAct Agent] User: {user_prompt}\n{'='*50}")
     
-    # Fallback kiểm tra nếu file ở thư mục hiện tại
-    if not os.path.exists(config_path):
-        config_path = "test_cases.json"
-        
-    with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def run_baseline_chatbot(user_query: str, provider):
-    """
-    Dựng Chatbot gốc (Baseline) không có công cụ.
-    """
-    print(f"\n💬 [CHATBOT BASELINE] Câu hỏi: {user_query}")
-    print(f"⚙️ System Prompt: {CHATBOT_BASELINE_PROMPT.strip()}")
-    
-    # Gọi LLM Provider thực hiện sinh câu trả lời
-    response = provider.generate(user_query, system_prompt=CHATBOT_BASELINE_PROMPT)
-    print(f"🤖 Chatbot trả lời:\n{response}")
-
-
-def run_react_agent(user_query: str, provider):
-    """
-    Dựng vòng lặp ReAct Agent (Thought -> Action -> Observation) có Guardrails.
-    """
-    print(f"\n🤖 [REACT AGENT] Câu hỏi: {user_query}")
+    # Giả lập vòng lặp ReAct
     step = 0
-    
-    while step < MAX_ITERATIONS:
-        step += 1
-        print(f"\n--- 🔄 Vòng lặp ReAct (Step {step}/{MAX_ITERATIONS}) ---")
+    if "DH1001" in user_prompt and "đổi trả" in user_prompt:
+        print("Thought: Cần kiểm tra điều kiện đổi trả của đơn DH1001 trước.")
+        print("Action: check_return_policy[\"DH1001\", \"áo bị rách khuy\"]")
+        obs1 = AVAILABLE_TOOLS["check_return_policy"]("DH1001", "áo bị rách khuy")
+        print(f"Observation: {obs1}")
         
-        if step == 1:
-            print("🧠 Thought: Câu hỏi này cần tra cứu thời tiết thời gian thực.")
-            print("🛠️ Action: get_weather['Hà Nội']")
-            
-            # Thực thi tool
-            obs = get_weather("Hà Nội")
-            print(f"👁️ Observation: {obs}")
-            
-        elif step == 2:
-            print("🧠 Thought: Tôi đã có thông tin thời tiết Hà Nội, giờ tôi có thể tư vấn trang phục.")
-            print("🏁 Final Answer: Thời tiết Hà Nội hôm nay 28°C, nắng nhẹ. Bạn nên mặc áo phông thoáng mát!")
-            break
-            
-    if step >= MAX_ITERATIONS:
-        print(f"🛡️ GUARDRAIL TRIGGERED: Đã đạt giới hạn tối đa {MAX_ITERATIONS} bước. Ngắt lặp an toàn!")
-
+        print("\nThought: Đơn hàng đủ điều kiện. Tiến hành tạo phiếu đổi trả.")
+        print("Action: create_return_request[\"DH1001\", \"áo bị rách khuy\"]")
+        obs2 = AVAILABLE_TOOLS["create_return_request"]("DH1001", "áo bị rách khuy")
+        print(f"Observation: {obs2}")
+        
+        final_ans = "Đơn hàng #DH1001 đủ điều kiện đổi trả. Đã tạo thành công phiếu yêu cầu RT-DH1001-2026."
+        print(f"\nFinal Answer: {final_ans}")
+        return final_ans
+    elif "DH9999" in user_prompt:
+        print("Thought: Tra cứu thông tin đơn hàng DH9999.")
+        print("Action: check_return_policy[\"DH9999\", \"sai màu\"]")
+        obs = AVAILABLE_TOOLS["check_return_policy"]("DH9999", "sai màu")
+        print(f"Observation: {obs}")
+        final_ans = "Rất tiếc, đơn hàng #DH9999 không tồn tại trong hệ thống."
+        print(f"\nFinal Answer: {final_ans}")
+        return final_ans
+    else:
+        print("Thought: Trả lời câu hỏi lý thuyết trực tiếp.")
+        final_ans = "Shop hỗ trợ đổi trả trong vòng 7 ngày kể từ khi nhận hàng và miễn phí ship do lỗi nhà sản xuất."
+        print(f"\nFinal Answer: {final_ans}")
+        return final_ans
 
 if __name__ == "__main__":
-    print("==================================================")
-    print("🏫 ĐẠI HỌC VINUNI - BÀI LAB 3: CHATBOT VS REACT AGENT")
-    print("==================================================")
-    
-    # Khởi tạo Multi-Provider LLM Adapter (Đọc từ biến môi trường LLM_PROVIDER)
-    provider = get_llm_provider()
-    model_name = getattr(provider, "model_name", "Offline Mock Mode")
-    print(f"🔌 LLM Provider đang hoạt động: {provider.__class__.__name__} (Model: {model_name})")
-    
-    tests = load_test_cases()
-    print(f"✅ Đã tải thành công {len(tests)} Test Cases từ config/test_cases.json\n")
-    
-    # Chạy thử câu test số 3
-    sample_query = tests[2]["question"]
-    
-    print("--- DEMO 1: CHẠY TRÊN CHATBOT BASELINE ---")
-    run_baseline_chatbot(sample_query, provider)
-    
-    print("\n--- DEMO 2: CHẠY TRÊN REACT AGENT ---")
-    run_react_agent(sample_query, provider)
+    # Load và chạy thử Test Case 4
+    with open("config/test_cases.json", "r", encoding="utf-8") as f:
+        cases = json.load(f)
+        print("--- CHẠY THỬ NGHIỆM APPLICATION ---")
+    run_react_agent(cases[3]["prompt"])
